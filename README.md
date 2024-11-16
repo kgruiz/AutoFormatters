@@ -167,32 +167,32 @@ Open your `settings.json` in VSCode and add the following configurations:
 
 ```yaml
 {
-    // Set Clang-Format as the default formatter for C++
+    # Set Clang-Format as the default formatter for C++
     "editor.defaultFormatter": "xaver.clang-format",
     "clang-format.style": "file:/path/to/.clang-format",
 
-    // Configure Run on Save for Python scripts
+    # Configure Run on Save for Python scripts
     "emeraldwalk.runonsave": {
         "commands": [
             {
                 "match": "\\.(cpp|h|hpp)$",
-                "isAsync": true,
+                "isAsync": true, # Optional
                 "cmd": "python /path/to/CppSpaceLines.py ${file}"
             },
             {
                 "match": "\\.py$",
-                "isAsync": true,
+                "isAsync": true, # Optional
                 "cmd": "python /path/to/PythonSpaceLines.py ${file}"
             },
             {
                 "match": "\\.(cpp|h|hpp)$",
-                "isAsync": true,
+                "isAsync": true, # Optional
                 "cmd": "python /path/to/RemoveCompilerDEBUG.py ${file}"
             }
         ]
     },
 
-    // Enable Black formatter for Python
+    # Enable Black formatter for Python
     "python.formatting.provider": "black",
     "editor.formatOnSave": true
 }
@@ -210,9 +210,9 @@ If your Python interpreter or virtual environment is located outside the workspa
         "commands": [
             {
                 "match": "\\.(cpp|h|hpp)$",
-                "isAsync": true,
-                "cmd": "/absolute/path/to/venv/bin/python /absolute/path/to/CppSpaceLines.py ${file}" // macOS/Linux
-                // "cmd": "C:\\absolute\\path\\to\\venv\\Scripts\\python.exe C:\\absolute\\path\\to\\CppSpaceLines.py ${file}" // Windows
+                "isAsync": true, # Optional
+                "cmd": "/absolute/path/to/venv/bin/python /absolute/path/to/CppSpaceLines.py ${file}" # macOS/Linux
+                # "cmd": "C:\\absolute\\path\\to\\venv\\Scripts\\python.exe C:\\absolute\\path\\to\\CppSpaceLines.py ${file}" # Windows
             }
         ]
     }
