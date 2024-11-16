@@ -165,7 +165,7 @@ Integrate the **Code Formatter & Cleaner Collection** with Visual Studio Code (V
 
 Open your `settings.json` in VSCode and add the following configurations:
 
-```json
+```yaml
 {
     // Set Clang-Format as the default formatter for C++
     "editor.defaultFormatter": "xaver.clang-format",
@@ -204,7 +204,7 @@ If your Python interpreter or virtual environment is located outside the workspa
 
 **Example for a Virtual Environment:**
 
-```json
+```yaml
 {
     "emeraldwalk.runonsave": {
         "commands": [
