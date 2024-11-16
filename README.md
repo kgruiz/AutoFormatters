@@ -1,4 +1,4 @@
-# Code Formatter & Cleaner Suite
+# Code Formatter & Cleaner Collection
 
 This is a collection of Python scripts and configuration files designed to help you maintain clean, well-formatted C++ and Python codebases. This collection automates the process of formatting code according to best practices, along with some personal adjustments, ensuring consistency and readability across your projects.
 
@@ -13,7 +13,8 @@ This is a collection of Python scripts and configuration files designed to help 
   - [.clang-format](#clang-format)
 - [Configuration](#configuration)
 - [Logging](#logging)
-- [License](#license)
+- [Integration with VSCode](#integration-with-vscode)
+- [Warning](#warning)
 
 ## Features
 
@@ -27,8 +28,8 @@ This is a collection of Python scripts and configuration files designed to help 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/code-formatter-cleaner-suite.git
-   cd code-formatter-cleaner-suite
+   git clone https://github.com/yourusername/code-formatter-cleaner-collection.git
+   cd code-formatter-cleaner-collection
    ```
 
 2. **Set Up a Virtual Environment (Optional but Recommended)**
@@ -94,11 +95,11 @@ python RemoveCompilerDEBUG.py <filePath>
 python RemoveCompilerDEBUG.py src/debug.cpp
 ```
 
-> **Note:** The regex pattern for removing debug sections is yet to be implemented. Ensure to define the appropriate pattern in the script before usage.
-
 ### .clang-format
 
 **Description:** A configuration file for `clang-format` to enforce a consistent C++ coding style based on the Google style guide with customized settings.
+
+**Summary:** The `.clang-format` file sets indentation, line length, brace style, and other formatting rules to maintain code consistency.
 
 **Usage:**
 
@@ -131,68 +132,7 @@ python RemoveCompilerDEBUG.py src/debug.cpp
 
 ## Configuration
 
-The `.clang-format` file included in this repository is pre-configured with the following settings:
-
-```yaml
-Language: Cpp
-BasedOnStyle: Google
-IndentWidth: 4
-ColumnLimit: 90
-AccessModifierOffset: 0
-AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
-AlignEscapedNewlinesLeft: true
-AlignOperands: true
-AlignTrailingComments: true
-AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortBlocksOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-AlwaysBreakAfterDefinitionReturnType: None
-AlwaysBreakAfterReturnType: None
-AlwaysBreakBeforeMultilineStrings: false
-AlwaysBreakTemplateDeclarations: true
-EmptyLineAfterAccessModifier: Always
-EmptyLineBeforeAccessModifier: Always
-FixNamespaceComments: true
-IncludeBlocks: Regroup
-IndentCaseLabels: true
-InsertBraces: true
-NamespaceIndentation: All
-PackConstructorInitializers: NextLineOnly
-ReferenceAlignment: Right
-RemoveParentheses: MultipleParentheses
-SeparateDefinitionBlocks: Always
-SortIncludes: CaseSensitive
-SpaceAfterCStyleCast: false
-SortUsingDeclarations: LexicographicNumeric
-SpaceBeforeAssignmentOperators: true
-PointerAlignment: Right
-SpaceBeforeParens: Custom
-SpaceBeforeParensOptions:
-    AfterControlStatements: true
-    AfterFunctionDefinitionName: false
-    AfterForeachMacros: true
-    AfterFunctionDeclarationName: false
-    AfterIfMacros: true
-    AfterOverloadedOperator: false
-    AfterPlacementOperator: true
-    AfterRequiresInClause: true
-    AfterRequiresInExpression: true
-SpaceBeforeSquareBrackets: false
-SpaceBeforeRangeBasedForLoopColon: true
-SpaceInEmptyBlock: false
-KeepEmptyLines:
-  AtEndOfFile: false
-  AtStartOfBlock: true
-  AtStartOfFile: false
-IndentPPDirectives: BeforeHash
-```
-
-Feel free to customize this file to better suit your project's coding standards.
+The `.clang-format` file included in this repository is pre-configured with settings based on the Google C++ style guide, including custom adjustments for indentation, line length, brace placement, and more. Feel free to customize this file to better suit your project's coding standards.
 
 ## Logging
 
@@ -204,4 +144,87 @@ All scripts are equipped with logging functionality to provide detailed informat
 
 Logs are output to the console. You can adjust the logging level by modifying the `logging.basicConfig` level in each script.
 
----
+## Integration with VSCode
+
+Integrate the **Code Formatter & Cleaner Collection** with Visual Studio Code (VSCode) to automate code formatting and cleaning.
+
+### 1. Install Extensions
+
+- **Run on Save** by emeraldwalk:
+  - Open VSCode.
+  - Go to the Extensions Marketplace (`Ctrl+Shift+X` or `Cmd+Shift+X`).
+  - Search for "Run on Save" by emeraldwalk and install it.
+
+- **Clang-Format** by Xaver Hellauer:
+  - Search for "Clang-Format" by Xaver Hellauer and install it.
+
+- **Black Formatter** for Python:
+  - Install the **Black** extension by searching "Black Formatter" in the Extensions Marketplace.
+
+### 2. Configure `settings.json`
+
+Open your `settings.json` in VSCode and add the following configurations:
+
+```json
+{
+    // Set Clang-Format as the default formatter for C++
+    "editor.defaultFormatter": "xaver.clang-format",
+    "clang-format.style": "file:/path/to/.clang-format",
+
+    // Configure Run on Save for Python scripts
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "\\.(cpp|h|hpp)$",
+                "isAsync": true,
+                "cmd": "python /path/to/CppSpaceLines.py ${file}"
+            },
+            {
+                "match": "\\.py$",
+                "isAsync": true,
+                "cmd": "python /path/to/PythonSpaceLines.py ${file}"
+            },
+            {
+                "match": "\\.(cpp|h|hpp)$",
+                "isAsync": true,
+                "cmd": "python /path/to/RemoveCompilerDEBUG.py ${file}"
+            }
+        ]
+    },
+
+    // Enable Black formatter for Python
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true
+}
+```
+
+### 3. Specify the Python Interpreter Path (Optional)
+
+If your Python interpreter or virtual environment is located outside the workspace folder, update the `cmd` field with the absolute path to the Python executable.
+
+**Example for a Virtual Environment:**
+
+```json
+{
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                "match": "\\.(cpp|h|hpp)$",
+                "isAsync": true,
+                "cmd": "/absolute/path/to/venv/bin/python /absolute/path/to/CppSpaceLines.py ${file}" // macOS/Linux
+                // "cmd": "C:\\absolute\\path\\to\\venv\\Scripts\\python.exe C:\\absolute\\path\\to\\CppSpaceLines.py ${file}" // Windows
+            }
+        ]
+    }
+}
+```
+
+> **Tips:**
+>
+> - **Windows Paths:** Use double backslashes (`\\`) or forward slashes (`/`).
+> - **macOS/Linux Paths:** Use forward slashes (`/`).
+> - **Environment Variables:** If Python is added to your system's PATH, you can use `python` instead of the full path.
+
+## Warning
+
+**Use caution when using Python scripts to modify file formatting.** There is a risk of glitches or crashes that may result in lost or corrupted code. Always ensure you have backups or version control in place before enabling automated formatting.
