@@ -3,11 +3,10 @@ import os
 import re
 import sys
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
-
 
 def FormatNewlines(filePath):
+
+    logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
 
     if not os.path.isfile(filePath):
 
@@ -15,25 +14,24 @@ def FormatNewlines(filePath):
         sys.exit(1)
 
     with open(filePath, "r", encoding="utf-8") as file:
+
         codeContent = file.read()
 
-    # Split the content into lines for line number tracking
     lines = codeContent.split("\n")
 
-    def getLineNumber(matchStart):
-        """Map a character position to a line number."""
+    def GetLineNumber(matchStart):
 
         cumulative = 0
         for i, line in enumerate(lines, start=1):
 
-            cumulative += len(line) + 1  # +1 for the newline character
+            cumulative += len(line) + 1
+
             if matchStart < cumulative:
 
                 return i
 
-        return -1  # If position not found
+        return -1
 
-    # Define a list of tuples containing (pattern, replacement, description)
     patterns = [
         (r"(class\s+\w+.*\{)\n(?!\n)", r"\1\n\n", "class declarations"),
         (r"(struct\s+\w+.*\{)\n(?!\n)", r"\1\n\n", "struct declarations"),
@@ -61,9 +59,11 @@ def FormatNewlines(filePath):
 
         matches = list(re.finditer(pattern, codeContent, re.MULTILINE))
         lineNumbers = []
+
         for match in matches:
 
-            lineNumber = getLineNumber(match.start())
+            lineNumber = GetLineNumber(match.start())
+
             if lineNumber != -1:
 
                 lineNumbers.append(lineNumber)
@@ -73,11 +73,13 @@ def FormatNewlines(filePath):
             logging.debug(f"Applying pattern for {description}: {pattern}")
             logging.debug(f"    Lines affected: {sorted(lineNumbers)}")
             codeContent = re.sub(pattern, replacement, codeContent, flags=re.MULTILINE)
+
         else:
 
             logging.debug(f"No matches found for pattern: {pattern}")
 
     with open(filePath, "w", encoding="utf-8") as file:
+
         file.write(codeContent)
         logging.info(f"File '{filePath}' has been formatted successfully.")
 

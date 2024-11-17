@@ -6,7 +6,6 @@ import sys
 
 def FormatNewlines(filePath):
 
-    # Configure logging for debugging
     logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
 
     if not os.path.isfile(filePath):
@@ -15,44 +14,43 @@ def FormatNewlines(filePath):
         sys.exit(1)
 
     with open(filePath, "r") as file:
+
         codeContent = file.read()
 
-    # Function to log affected lines with specified format
     def LogAffectedLines(pattern):
-        """
-        Logs the pattern being applied along with the sorted list of affected line numbers.
 
-        Args:
-            pattern (str): The regex pattern to search for.
-        """
-        # Find all matches
         matches = list(
             re.finditer(pattern, codeContent, flags=re.MULTILINE | re.DOTALL)
         )
+
         if matches:
 
-            # Collect unique line numbers affected
-            lineNumbers = sorted(
-                set(codeContent.count("\n", 0, match.start()) + 1 for match in matches)
-            )
+            lineRanges = []
 
-            # Log the lines affected
-            logging.debug(f"Removing compiler DEBUG section.")
-            logging.debug(f"    Lines affected: {lineNumbers}.")
+            for match in matches:
 
-    # pattern = rf"(^\s*{keyword}\s*(?!.*\(.*).*:)(?=\n(?!\n))"
+                startLine = codeContent.count("\n", 0, match.start()) + 1
+                endLine = codeContent.count("\n", 0, match.end()) + 1
 
-    # # Add spacing after class declarations unless followed by a comment or a newline
-    # patternClassDocstring = r"(\bclass\s+\w+.*:)(\n\s*\"\"\")"
-    # LogAffectedLines(patternClassDocstring, "Class declaration followed by docstring")
-    # codeContent = re.sub(patternClassDocstring, r"\1\2", codeContent)
+                if startLine == endLine:
 
-    pattern = r"(^\s*)"
+                    lineRanges.append(f"{startLine}")
+
+                else:
+
+                    lineRanges.append(f"{startLine}-{endLine}")
+
+            logging.debug("Removing compiler DEBUG section.")
+            logging.debug(f"    Lines affected: {', '.join(lineRanges)}.")
+
+    pattern = r"(?s)(#ifdef DEBUG.*?#endif\n)"
 
     LogAffectedLines(pattern)
-    codeContent = re.sub(pattern, r"\1\n", codeContent, flags=re.MULTILINE)
+    codeContent = re.sub(pattern, r"", codeContent, flags=re.MULTILINE)
 
     with open(filePath, "w") as file:
+
+        logging.info(f"File '{filePath}' has been formatted successfully.")
         file.write(codeContent)
 
 
@@ -62,6 +60,7 @@ if __name__ == "__main__":
 
         print("Usage: python RemoveCompilerDEBUG.py <filePath>")
         print(f"Received arguments: {sys.argv}")
+
         sys.exit(1)
 
     FormatNewlines(sys.argv[1])
