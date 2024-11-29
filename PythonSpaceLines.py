@@ -2,6 +2,48 @@ import logging
 import os
 import re
 import sys
+from typing import List, Union
+
+
+class CodeSection:
+    def __init__(self, indentedLine: str, parent: "CodeSection" = None):
+        self.children: List["CodeSection"] = []
+        self.level: int = len(indentedLine) - len(indentedLine.lstrip())
+        self.text: str = indentedLine.strip()
+        self.parent: "CodeSection" = parent
+
+    def AddChildren(self, nodes: List["CodeSection"]):
+        if not nodes:
+            return
+        childLevel = nodes[0].level
+        while nodes:
+            node = nodes[0]
+            if node.level < self.level:
+                # Node belongs to a higher level; let the parent handle it
+                return
+            elif node.level == childLevel:
+                self.children.append(nodes.pop(0))
+            elif node.level > childLevel:
+                if not self.children:
+                    raise Exception("Cannot add child to a node without a parent.")
+                self.children[-1].AddChildren(nodes)
+            else:
+                # node.level < childLevel
+                return
+
+    def AsDict(self) -> Union[dict, str]:
+        if len(self.children) > 1:
+            return {self.text: [child.AsDict() for child in self.children]}
+        elif len(self.children) == 1:
+            return {self.text: self.children[0].AsDict()}
+        else:
+            return self.text
+
+
+def PrintTree(section: CodeSection, indent: int = 0):
+    print(" " * indent + section.text)
+    for child in section.children:
+        PrintTree(child, indent + 4)
 
 
 def FormatNewlines(filePath):
@@ -36,23 +78,33 @@ def FormatNewlines(filePath):
     LogAffectedLines(patternClassDocstring, "Class declaration followed by docstring")
     codeContent = re.sub(patternClassDocstring, r"\1\2", codeContent)
 
-    patternClassNewline = r"(\bclass\s+\w+.*:)\n(?!\s*\"\"\"|\n)"
-    LogAffectedLines(patternClassNewline, "Added newline after class declaration")
-    codeContent = re.sub(patternClassNewline, r"\1\n\n", codeContent)
+    splitLines = codeContent.splitlines()
 
-    patternDefDocstring = r"(\bdef\s+\w+.*:)(\n\s*\"\"\")"
-    LogAffectedLines(patternDefDocstring, "Function declaration followed by docstring")
-    codeContent = re.sub(patternDefDocstring, r"\1\2", codeContent)
+    nodes = []
+    prevLevel = 0
+    for line in codeContent.strip().splitlines():
+        if line.strip():
+            node = CodeSection(line)
+            prevLevel = node.level
+        else:
+            node = CodeSection(" " * prevLevel)
+        nodes.append(node)
 
-    patternDefNewline = r"(\bdef\s+\w+.*:)\n(?!\s*\"\"\"|\n)"
-    LogAffectedLines(patternDefNewline, "Added newline after function declaration")
-    codeContent = re.sub(patternDefNewline, r"\1\n\n", codeContent)
+    # Create root section
+    root = CodeSection("root")
 
-    patternDocstringNewline = r"(\"\"\".*?\"\"\")\n(?!\n)"
-    LogAffectedLines(patternDocstringNewline, "Added newline after docstring")
-    codeContent = re.sub(patternDocstringNewline, r"\1\n\n", codeContent)
+    # Build the tree
+    root.AddChildren(nodes)
 
-    controlKeywords = [
+    # Convert the tree to a dictionary
+    treeDict = root.AsDict()["root"]
+    print("Tree as Dictionary:")
+    print(treeDict)
+
+    print("\nVisual Representation:")
+    PrintTree(root)
+
+    insertLineAfterKeywords = [
         "if",
         "elif",
         "else",
@@ -63,81 +115,6 @@ def FormatNewlines(filePath):
         "finally",
         "return",
     ]
-
-    for keyword in controlKeywords:
-
-        if keyword in ["if", "for"]:
-
-            pattern = rf"(^\s*{keyword}\s*(?!.*\(.*).*:)(?=\n(?!\n))"
-            description = (
-                f"Added newline after '{keyword}' statement without parentheses"
-            )
-
-        else:
-
-            pattern = rf"(^\s*{keyword}\s*(?!.*\(.*).*)(?=\n(?!\n))"
-            description = (
-                f"Added newline after '{keyword}' statement without parentheses"
-            )
-
-        LogAffectedLines(pattern, description)
-        codeContent = re.sub(pattern, r"\1\n", codeContent, flags=re.MULTILINE)
-
-    def InsertBlankAfterClosedParentheses(match):
-
-        line = match.group(0)
-        openingCount = line.count("(")
-        closingCount = line.count(")")
-
-        if openingCount == closingCount:
-
-            if not re.search(r"\n\s*\n", codeContent[match.end() :]):
-
-                return line + "\n"
-
-        return line
-
-    patternParentheses = r"^.*\)$"
-    matchesParentheses = list(
-        re.finditer(patternParentheses, codeContent, flags=re.MULTILINE)
-    )
-
-    if matchesParentheses:
-
-        lineNumbers = sorted(
-            set(
-                codeContent.count("\n", 0, match.start()) + 1
-                for match in matchesParentheses
-            )
-        )
-
-        logging.debug(
-            f"Applying pattern for Adding newline after closing parentheses: {patternParentheses}"
-        )
-
-        logging.debug(f"    Lines affected: {lineNumbers}")
-
-    codeContent = re.sub(
-        patternParentheses,
-        InsertBlankAfterClosedParentheses,
-        codeContent,
-        flags=re.MULTILINE,
-    )
-
-    patternForIfNewline = r"(^\s*(for|if)\s*[^\(]*:\n)(?!\n)"
-    LogAffectedLines(
-        patternForIfNewline,
-        "Added newline after 'for' or 'if' statement without parentheses",
-    )
-    codeContent = re.sub(patternForIfNewline, r"\1\n", codeContent, flags=re.MULTILINE)
-
-    patternForIfComplex = r"(^\s*(for|if)\s*[^\(]*\(?(?!.*\(.*\(.*).*?\)?:\n)(?!\n)"
-    LogAffectedLines(
-        patternForIfComplex,
-        "Added newline after complex 'for' or 'if' statement without nested parentheses",
-    )
-
-    codeContent = re.sub(patternForIfComplex, r"\1\n", codeContent, flags=re.MULTILINE)
 
     patternTrailingNewlines = r"\n+$"
 
@@ -154,10 +131,14 @@ def FormatNewlines(filePath):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
+    filePath = os.path.abspath(__file__)
 
-        print("Usage: python PythonSpaceLines.py <filePath>")
-        print(f"Received arguments: {sys.argv}")
-        sys.exit(1)
+    # if len(sys.argv) != 2:
 
-    FormatNewlines(sys.argv[1])
+    #     print("Usage: python PythonSpaceLines.py <filePath>")
+    #     print(f"Received arguments: {sys.argv}")
+    #     sys.exit(1)
+
+    # FormatNewlines(sys.argv[1])
+
+    FormatNewlines(filePath)
