@@ -2,15 +2,20 @@ import logging
 import os
 import re
 import sys
+from json import dump, dumps
 from typing import List, Union
 
 
 class CodeSection:
     def __init__(self, indentedLine: str, parent: "CodeSection" = None):
         self.children: List["CodeSection"] = []
-        self.level: int = len(indentedLine) - len(indentedLine.lstrip())
         self.text: str = indentedLine.strip()
+        if self.text in {"]", "}", ")"}:
+            self.level = len(indentedLine) - len(indentedLine.lstrip())
+        else:
+            self.level: int = len(indentedLine) - len(indentedLine.lstrip())
         self.parent: "CodeSection" = parent
+        self.prev: "CodeSection" = None
 
     def AddChildren(self, nodes: List["CodeSection"]):
         if not nodes:
@@ -22,7 +27,9 @@ class CodeSection:
                 # Node belongs to a higher level; let the parent handle it
                 return
             elif node.level == childLevel:
-                self.children.append(nodes.pop(0))
+                child = nodes.pop(0)
+                child.parent = self
+                self.children.append(child)
             elif node.level > childLevel:
                 if not self.children:
                     raise Exception("Cannot add child to a node without a parent.")
@@ -32,6 +39,7 @@ class CodeSection:
                 return
 
     def AsDict(self) -> Union[dict, str]:
+
         if len(self.children) > 1:
             return {self.text: [child.AsDict() for child in self.children]}
         elif len(self.children) == 1:
@@ -41,9 +49,43 @@ class CodeSection:
 
 
 def PrintTree(section: CodeSection, indent: int = 0):
-    print(" " * indent + section.text)
+
+    if section.text.strip() != "":
+
+        print(f"{" " * indent}{section.text} (Level {section.level})")
+
+    else:
+
+        print()
+
     for child in section.children:
+
         PrintTree(child, indent + 4)
+
+
+def TraverseTree(section: CodeSection):
+
+    if section.prev and (
+        section.text.strip() == ")"
+        or section.text.strip() == "]"
+        or section.text.strip() == "}"
+    ):
+
+        section.level = section.prev.level
+
+        if section.parent:
+
+            section.parent.children.remove(section)
+
+        section.parent = section.prev.parent
+
+        if section.parent:
+
+            section.parent.children.append(section)
+
+    for child in section.children:
+
+        TraverseTree(child)
 
 
 def FormatNewlines(filePath):
@@ -81,13 +123,17 @@ def FormatNewlines(filePath):
     splitLines = codeContent.splitlines()
 
     nodes = []
+    previousNode = None
     prevLevel = 0
     for line in codeContent.strip().splitlines():
         if line.strip():
             node = CodeSection(line)
+            node.prev = previousNode
+            previousNode = node
             prevLevel = node.level
         else:
             node = CodeSection(" " * prevLevel)
+            node.prev = previousNode
         nodes.append(node)
 
     # Create root section
@@ -96,10 +142,20 @@ def FormatNewlines(filePath):
     # Build the tree
     root.AddChildren(nodes)
 
+    TraverseTree(root)
+
     # Convert the tree to a dictionary
     treeDict = root.AsDict()["root"]
     print("Tree as Dictionary:")
-    print(treeDict)
+    print(dumps(treeDict, indent=4))
+
+    with open("out.json", "w") as file:
+
+        dump(
+            treeDict,
+            file,
+            indent=2,
+        )
 
     print("\nVisual Representation:")
     PrintTree(root)
