@@ -1,0 +1,20 @@
+# preferences for information displayed in the log file
+logFilePreferences:
+  showEveryYamlRead: 0
+  showDecorationStartCodeBlockTrace: 1
+  showDecorationFinishCodeBlockTrace: 1
+  Dumper:
+    Indent: 4
+
+# default value of indentation
+defaultIndent: "    "
+
+# remove trailing whitespace from all lines
+removeTrailingWhitespace:
+  beforeProcessing: 1
+
+# you can specify settings on a per-name basis
+modifyLineBreaks:
+    manipulateSentences: 1              # 0/1
+    textWrapSentences: 1                # 1 disables main textWrap
+      wrap: 1                           # 0/1

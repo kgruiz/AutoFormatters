@@ -47,6 +47,23 @@ class CodeSection:
         else:
             return self.text
 
+    def FindNearestCommonAncestor(
+        node1: "CodeSection", node2: "CodeSection"
+    ) -> Union["CodeSection", None]:
+
+        ancestors1 = set()
+        current = node1
+        while current:
+            ancestors1.add(current)
+            current = current.parent
+
+        current = node2
+        while current:
+            if current in ancestors1:
+                return current
+            current = current.parent
+        return None
+
 
 def PrintTree(section: CodeSection, indent: int = 0):
 
@@ -146,19 +163,19 @@ def FormatNewlines(filePath):
 
     # Convert the tree to a dictionary
     treeDict = root.AsDict()["root"]
-    print("Tree as Dictionary:")
-    print(dumps(treeDict, indent=4))
+    # print("Tree as Dictionary:")
+    # print(dumps(treeDict, indent=4))
 
-    with open("out.json", "w") as file:
+    # with open("out.json", "w") as file:
 
-        dump(
-            treeDict,
-            file,
-            indent=2,
-        )
+    #     dump(
+    #         treeDict,
+    #         file,
+    #         indent=2,
+    #     )
 
-    print("\nVisual Representation:")
-    PrintTree(root)
+    # print("\nVisual Representation:")
+    # PrintTree(root)
 
     insertLineAfterKeywords = [
         "if",
