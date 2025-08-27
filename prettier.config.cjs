@@ -1,10 +1,12 @@
 // prettier.config.cjs
+const PNPM_GLOBAL = "/Users/kadengruizenga/Library/pnpm/global/5/node_modules";
+const R = (m) => require.resolve(m, { paths: [PNPM_GLOBAL] });
 
 const basePlugins = [
-    "prettier-plugin-multiline-arrays",
-    "prettier-plugin-organize-imports",
-    "@huggingface/prettier-plugin-vertical-align",
-    "@trivago/prettier-plugin-sort-imports",
+    R("prettier-plugin-multiline-arrays"),
+    R("prettier-plugin-organize-imports"),
+    R("@huggingface/prettier-plugin-vertical-align"),
+    R("@trivago/prettier-plugin-sort-imports"),
 ];
 
 module.exports = {
